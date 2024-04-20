@@ -8,7 +8,6 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-@AllArgsConstructor
 @NoArgsConstructor
 public class Picture {
     @Id
@@ -24,4 +23,10 @@ public class Picture {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public Picture(String name, String path, User user) {
+        this.name = name;
+        this.path = path;
+        this.user = user;
+    }
 }

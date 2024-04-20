@@ -1,7 +1,10 @@
 package com.datn.monolithic.service;
 
 import com.datn.monolithic.entity.Picture;
+import com.datn.monolithic.entity.User;
 import com.datn.monolithic.payload.response.Res;
+import com.datn.monolithic.repository.PictureRepository;
+import com.datn.monolithic.repository.UserRepository;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -27,9 +30,19 @@ import java.util.Collections;
 @Service
 public class PictureIMPL implements PictureService {
 
+    private final PictureRepository pictureRepository;
+    private final UserRepository userRepository;
+
+
+
     private static final JsonFactory JSON_Factory = GsonFactory.getDefaultInstance();
 
     private static final  String SERVICE_ACCOUNT_KEY_PATH = getPathToGoogleCredentials();
+
+    public PictureIMPL(PictureRepository pictureRepository, UserRepository userRepository) {
+        this.pictureRepository = pictureRepository;
+        this.userRepository = userRepository;
+    }
 
     private static String getPathToGoogleCredentials() {
         String currentDir = System.getProperty("user.dir");
@@ -37,25 +50,34 @@ public class PictureIMPL implements PictureService {
         return filePath.toString();
     }
 
-    public Res uploadImageToDrive(File file) throws GeneralSecurityException, IOException {
+    public Res uploadImageToDrive(File file, String username) throws GeneralSecurityException, IOException {
+        User user = userRepository.findByUsername(username);
         Res res = new Res();
         try {
+            File converted = convertToBlackAndWhite(file);
+
             String folderId = "1WRrvdfQpujWx7fQ5xYfapL9gIym2Xprs";
             Drive drive = createDriveService();
 
             com.google.api.services.drive.model.File fileMetaData = new com.google.api.services.drive.model.File();
-            fileMetaData.setName(file.getName());
+            fileMetaData.setName(converted.getName());
             fileMetaData.setParents(Collections.singletonList(folderId));
-            FileContent mediaContent = new FileContent("image/jpeg", file);
+            FileContent mediaContent = new FileContent("image/jpeg", converted);
 
             com.google.api.services.drive.model.File uploadFile = drive.files().create(fileMetaData, mediaContent)
                     .setFields("id").execute();
 
-            String imageUrl = "https://drive.google.com/uc?export=view&id=" + uploadFile.getId();
+//            String imageUrl = "https://drive.google.com/uc?export=view&id=" + uploadFile.getId();
 
             res.setStatus(200);
             res.setMessage("Image Successfully Uploaded To Drive");
-            res.setUrl(imageUrl);
+            res.setUrl(uploadFile.getId());
+
+            if(user != null){
+                pictureRepository.save(new Picture(converted.getName(), uploadFile.getId(), user));
+            }else{
+                System.out.println("user is null");
+            }
 
         }catch (Exception e){
             System.out.println(e.getMessage());
@@ -83,10 +105,11 @@ public class PictureIMPL implements PictureService {
 
 
     @Override
-    public String convertToBlackAndWhite(Picture picture) throws IOException {
+    public File convertToBlackAndWhite(File file) throws IOException {
+
         BufferedImage image_pixels;
-        File f = new File(picture.getPath());
-        image_pixels = ImageIO.read(f);
+//        File f = new File(picture.getPath());
+        image_pixels = ImageIO.read(file);
         for (int x = 0; x < image_pixels.getWidth(); ++x)
             for (int y = 0; y < image_pixels.getHeight(); ++y) {
                 int rgb = image_pixels.getRGB(x, y);
@@ -94,7 +117,9 @@ public class PictureIMPL implements PictureService {
                 int gray = (grayLevel << 16) + (grayLevel << 8) + grayLevel;
                 image_pixels.setRGB(x, y, gray);
             }
-        return "";
+        File outputfile = new File("image.jpg");
+        ImageIO.write(image_pixels, "jpg", outputfile);
+        return outputfile;
     }
 
     private static int getGrayLevel(int rgb) {

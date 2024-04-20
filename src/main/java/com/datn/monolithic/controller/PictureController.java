@@ -20,14 +20,14 @@ public class PictureController {
     }
 
     @PostMapping("/upload")
-    public Object upload(@RequestParam("image") MultipartFile file) throws IOException, GeneralSecurityException {
+    public Object upload(@RequestParam("image") MultipartFile file, @RequestParam("username") String username) throws IOException, GeneralSecurityException {
         if (file.isEmpty()) {
             return "File is empty";
         }
-        File tempFile = File.createTempFile("temp", null);
+        File tempFile = File.createTempFile("image", ".jpg");
         file.transferTo(tempFile);
 
-        return pictureService.uploadImageToDrive(tempFile);
+        return pictureService.uploadImageToDrive(tempFile, username);
 
     }
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 public interface PictureService {
-    String convertToBlackAndWhite(Picture picture) throws IOException;
-    public Res uploadImageToDrive(File file)throws GeneralSecurityException, IOException;
+    File convertToBlackAndWhite(File file) throws IOException;
+    Res uploadImageToDrive(File file, String username)throws GeneralSecurityException, IOException;
+
 }
