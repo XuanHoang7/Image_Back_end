@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.List;
 
 
 @Service
@@ -137,5 +138,11 @@ public class PictureIMPL implements PictureService {
 
         // Gamma command and rescale to byte range:
         return (int) (255.0 * Math.pow(lum, 1.0 / 2.2));
+    }
+    @Override
+    public List<Picture> getPicturesByUsername(String username){
+        User user = userRepository.findByUsername(username);
+//        System.out.println(pictureRepository.findByUserId(user.getId()).toArray().length);
+        return pictureRepository.findByUserId(user.getId());
     }
 }

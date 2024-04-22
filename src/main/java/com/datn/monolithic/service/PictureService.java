@@ -6,9 +6,10 @@ import com.datn.monolithic.payload.response.Res;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
 
 public interface PictureService {
     File convertToBlackAndWhite(File file) throws IOException;
     Res uploadImageToDrive(File file, String username)throws GeneralSecurityException, IOException;
-
+    List<Picture> getPicturesByUsername(String username);
 }
